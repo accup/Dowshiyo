@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>{{ site.title }}</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	{% include link.html %}
+</head>
+<body>
+	{% include nav_home.html %}
+	<div class="p-4">
+		{{ content }}
+	</div>
+	{% include script.html %}
+</body>
+</html>

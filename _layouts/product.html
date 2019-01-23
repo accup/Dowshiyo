@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>{{ page.title }}</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	{% include link.html %}
+</head>
+<body>
+	{% include nav.html %}
+	<div class="jumbotron">
+		<h1 class="display-5">{{ page.title }}</h1>
+		<p class="lead">{{ page.description }}</p>
+		<a class="btn btn-primary" href="{{ page.download | relative_url }}" role="button" download>Download</a>
+	</div>
+	<main class="container">
+		{{ content }}
+	</main>
+	{% include script.html %}
+</body>
+</html>

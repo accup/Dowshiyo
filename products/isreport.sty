@@ -1,0 +1,400 @@
+% LaTeX style file (.sty) for expanding source code
+% ^^							presented by Accup
+%
+% IS Students and the others in the world can use it! Have a comfortable TeX writing!
+% 
+% You can use it but it's at your own risk.
+% 
+
+\ProvidesPackage{isreport}[2018/05/21 v0.9]
+
+\RequirePackage{framed}
+%\RequirePackage{ifthen}
+
+% isreport utilities
+\newlength{\isreport@tablength}% tab width
+\newlength{\isreport@tabspacelength}% calced tab width
+\newlength{\isreport@characterlength}% calced char width
+\newlength{\isreport@defaulttablength}% width of "0000"
+\settowidth{\isreport@defaulttablength}{0000}
+\newlength{\isreport@linenumberlength}% linenumber width
+\newlength{\isreport@defaultlinenumberlength}% linenumber width
+% [not used] \newlength{\isreport@contentlength}%
+\settowidth{\isreport@defaultlinenumberlength}{00000}
+% [not used] \newlength{\isreport@hsize}% hsize
+
+% a token for detecting the end of inputs
+\newtoks\isreport@end
+
+\newcommand{\isreport@space}{\hskip 1ex\relax}
+\newcommand{\isreport@tab}[1]{\hskip #1\relax}
+
+\newcommand{\isreport@pad}[1]{\relax
+	\setlength{\isreport@tabspacelength}{\isreport@linenumberlength}\relax
+	\settowidth{\isreport@characterlength}{#1}\relax
+	\addtolength{\isreport@tabspacelength}{-1.0\isreport@characterlength}\relax
+	\hskip\isreport@tabspacelength\relax
+}
+
+% delete first and last space
+\def\isreport@shrinkspace#1\isreport@end{\isreport@shrinkspace@first#1\isreport@end}
+\def\isreport@shrinkspace@first#1#2{%
+	\ifcat#1 %
+		\expandafter\isreport@shrinkspace@first
+		\expandafter #2%
+	\else
+		\expandafter\isreport@shrinkspace@rest
+		\expandafter #1%
+		\expandafter #2%
+	\fi
+}
+\def\isreport@shrinkspace@rest#1#2{%
+	\ifx#2\isreport@end%
+		\ifcat#1 \else#1\fi
+	\else
+		\ifcat#2 %
+			\ifcat#1 \relax \fi
+		\else
+			#1%
+		\fi
+		\expandafter\isreport@shrinkspace@rest
+		\expandafter #2%
+	\fi
+}
+
+% find string from string list (abc, def, ...)
+%
+% iffind inner conditional function
+\newif\ifisreport@iffind@result
+% iffind inner function
+\def\isreport@iffind@if#1,{%
+	\edef\isreport@strII{\isreport@shrinkspace#1\isreport@end}%
+	\ifx\isreport@strI\isreport@strII
+		\isreport@iffind@resulttrue
+	\fi
+	\ifx\empty\isreport@strII
+	\else
+		\expandafter\isreport@iffind@if
+	\fi
+}
+% find string from string list (abc, def, ...)
+\def\isreport@iffind#1#2#3{%
+	\edef\isreport@strI{\isreport@shrinkspace#1\isreport@end}%
+	\isreport@iffind@resultfalse
+	\isreport@iffind@if #2,\empty,%
+	\ifisreport@iffind@result
+		#3%
+	\fi
+}
+
+% spaces used and replaced with underscore
+\catcode`\ =12
+\catcode`\	=12
+\catcode`\_=10
+\newcommand{\isreport@repsps}[1]{%
+____\if_\isreport@end#1%
+____\else
+________\if_	#1%
+____________\isreport@tab{\isreport@tabspacelength}%
+____________\setlength{\isreport@tabspacelength}{\isreport@tablength}%
+________\else\if_ #1%
+____________\isreport@space
+____________\addtolength{\isreport@tabspacelength}{-1ex}%
+________\else
+____________#1%
+____________\settowidth{\isreport@characterlength}{#1}%
+____________\addtolength{\isreport@tabspacelength}{-1.0\isreport@characterlength}%
+________\fi\fi
+________\ifdim_\isreport@tabspacelength<0ex%
+____________\addtolength{\isreport@tabspacelength}{\isreport@tablength}%
+________\fi%
+____\expandafter\isreport@repsps\fi
+}
+\catcode`\_=8
+\catcode`\ =10
+\catcode`\	=10
+
+\newcommand{\isreport@replacespaces}[1]{%
+	\if\par#1\relax	% ただの空行でないか
+	\else
+		\setlength{\isreport@tabspacelength}{\isreport@tablength}%
+		\expandafter\isreport@repsps#1\isreport@end%
+	\fi
+}
+
+\edef\isreport@filename{}
+
+% bind file and load all line
+\newread\isreport@file
+\newcounter{isreport@linenumber}
+\newcommand{\bindsource}[1]{\sbindsource{0}{99999999}{#1}}
+\newcommand{\sbindsource}[3]{%
+	\edef\isreport@filename{\isreport@shrinkspace#3\isreport@end}%
+	\expandafter\ifx\csname isreport@file@\isreport@filename\endcsname \relax
+		\IfFileExists{\isreport@filename}{%
+			\typeout{isreport: Bind file '\isreport@filename'}%
+			\isreport@changecatcode
+			\openin\isreport@file=\isreport@filename
+			\setcounter{isreport@linenumber}{1}%
+			\loop
+				\ifnum \value{isreport@linenumber}<#2%
+					\ifnum \value{isreport@linenumber}<#1%
+						\read\isreport@file to\isreport@x%
+					\else
+						\edef\isreport@x{\csname isreport@file@\isreport@filename @\the\value{isreport@linenumber}\endcsname}%
+						\read\isreport@file t\expandafter o\isreport@x%
+					\fi
+				\else
+					\read\isreport@file to\isreport@x%
+				\fi
+				\unless \ifeof \isreport@file
+				\addtocounter{isreport@linenumber}{1}%
+			\repeat
+			\expandafter\edef\csname isreport@file@\isreport@filename\endcsname{\the\value{isreport@linenumber}}%
+			\closein\isreport@file
+			\isreport@restorecatcode
+		}{%
+			\PackageError{isreport}{File Not Exists.}{Try to load "\isreport@filename"}%
+		}%
+	\fi
+}
+\newcommand{\releasesource}[1]{%
+	\edef\isreport@filename{\isreport@shrinkspace#1\isreport@end}%
+	\expandafter\ifx\csname isreport@file@\isreport@filename\endcsname \relax
+	\else
+		\typeout{isreport: Release file '\isreport@filename'}%
+		\setcounter{isreport@linenumber}{1}%
+		\setcounter{isreport@maxlinenumber}{\csname isreport@file@\isreport@filename\endcsname}%
+		\loop
+		\ifnum \value{isreport@linenumber}<\value{isreport@maxlinenumber}%
+			\expandafter\def\csname isreport@file@\isreport@filename @\the\value{isreport@linenumber}\endcsname{}%
+			\addtocounter{isreport@linenumber}{1}%
+		\repeat
+		\expandafter\edef\csname isreport@file@\isreport@filename\endcsname{\relax}%
+	\fi
+}
+
+\newcommand{\isreport@verb}[1]{%
+	\edef\isreport@x{\noexpand\detokenize{#1}}%
+	\isreport@x
+}
+
+% setting style
+\def\isreport@style@family{\ttfamily}
+\def\isreport@style@tablength{\isreport@defaulttablength}
+\def\isreport@style@linenumberlength{\isreport@defaultlinenumberlength}
+\def\isreport@style@firstline{1}
+\def\isreport@style@lastline{99999999}
+
+\newlength{\isreport@style@customlinenumberlength}
+\newcommand{\SourcecodeStyleLineNumberLength}[1][default]{%
+	\settowidth{\isreport@style@customlinenumberlength}{#1}%
+	\def\isreport@style@linenumberlength{\isreport@style@customlinenumberlength}%
+	\isreport@iffind{default}{#1}{
+		\def\isreport@style@linenumberlength{\isreport@defaultlinenumberlength}%
+	}
+}
+
+% change catcode
+\def\isreport@changecatcode{\relax
+	% Treat special character as normally.
+	\catcode`\a=12	\catcode`\b=12	\catcode`\c=12	\catcode`\d=12
+	\catcode`\e=12	\catcode`\f=12	\catcode`\g=12	\catcode`\h=12
+	\catcode`\i=12	\catcode`\j=12	\catcode`\k=12	\catcode`\l=12
+	\catcode`\m=12	\catcode`\n=12	\catcode`\o=12	\catcode`\p=12
+	\catcode`\q=12	\catcode`\r=12	\catcode`\s=12	\catcode`\t=12
+	\catcode`\u=12	\catcode`\v=12	\catcode`\w=12	\catcode`\x=12
+	\catcode`\y=12	\catcode`\z=12
+	\catcode`\A=12	\catcode`\B=12	\catcode`\C=12	\catcode`\D=12
+	\catcode`\E=12	\catcode`\F=12	\catcode`\G=12	\catcode`\H=12
+	\catcode`\I=12	\catcode`\J=12	\catcode`\K=12	\catcode`\L=12
+	\catcode`\M=12	\catcode`\N=12	\catcode`\O=12	\catcode`\P=12
+	\catcode`\Q=12	\catcode`\R=12	\catcode`\S=12	\catcode`\T=12
+	\catcode`\U=12	\catcode`\V=12	\catcode`\W=12	\catcode`\X=12
+	\catcode`\Y=12	\catcode`\Z=12
+	\catcode`\{=12
+	\catcode`\}=12
+	\catcode`\$=12
+	\catcode`\&=12
+	\catcode`\#=12
+	\catcode`\^=12
+	\catcode`\_=12
+	\catcode`\ =12
+	\catcode`\	=12
+	\catcode`\~=12
+	\catcode`\%=12
+	\catcode`\\=12
+}
+% restore catcode
+\def\isreport@restorecatcode{\relax
+	\catcode`\\=0
+	\catcode`\a=11	\catcode`\b=11	\catcode`\c=11	\catcode`\d=11
+	\catcode`\e=11	\catcode`\f=11	\catcode`\g=11	\catcode`\h=11
+	\catcode`\i=11	\catcode`\j=11	\catcode`\k=11	\catcode`\l=11
+	\catcode`\m=11	\catcode`\n=11	\catcode`\o=11	\catcode`\p=11
+	\catcode`\q=11	\catcode`\r=11	\catcode`\s=11	\catcode`\t=11
+	\catcode`\u=11	\catcode`\v=11	\catcode`\w=11	\catcode`\x=11
+	\catcode`\y=11	\catcode`\z=11
+	\catcode`\A=11	\catcode`\B=11	\catcode`\C=11	\catcode`\D=11
+	\catcode`\E=11	\catcode`\F=11	\catcode`\G=11	\catcode`\H=11
+	\catcode`\I=11	\catcode`\J=11	\catcode`\K=11	\catcode`\L=11
+	\catcode`\M=11	\catcode`\N=11	\catcode`\O=11	\catcode`\P=11
+	\catcode`\Q=11	\catcode`\R=11	\catcode`\S=11	\catcode`\T=11
+	\catcode`\U=11	\catcode`\V=11	\catcode`\W=11	\catcode`\X=11
+	\catcode`\Y=11	\catcode`\Z=11
+	\catcode`\{=1
+	\catcode`\}=2
+	\catcode`\$=3
+	\catcode`\&=4
+	\catcode`\#=5
+	\catcode`\^=7
+	\catcode`\_=8
+	\catcode`\ =10
+	\catcode`\	=10
+	\catcode`\~=13
+	\catcode`\%=14
+}
+
+% define source code data
+\newcounter{isreport@firstline}
+\newcounter{isreport@lastline}
+\newcounter{isreport@maxlinenumber}
+\newlength{\isreport@filenamewidth}
+\newlength{\isreport@totalleftmargin}
+
+% [now not used] framed environment for source code
+\newenvironment{isreport@oframed}{% open (top or bottom) framed
+  \setlength{\isreport@totalleftmargin}{\hsize}%
+  \addtolength{\isreport@totalleftmargin}{-\linewidth}%
+  \def\FrameCommand{\hspace{\isreport@totalleftmargin}\OpenFBox\FrameRule\FrameRule}%
+  \def\FirstFrameCommand{\hspace{\isreport@totalleftmargin}\OpenFBox\FrameRule\z@}%
+  \def\MidFrameCommand{\hspace{\isreport@totalleftmargin}\OpenFBox\z@\z@}%
+  \def\LastFrameCommand{\hspace{\isreport@totalleftmargin}\OpenFBox\z@\FrameRule}%
+  \MakeFramed {\advance\hsize-\width \FrameRestore}%
+  }{\endMakeFramed}
+\newenvironment{isreport@noframed}{% open (top or bottom) framed
+  \def\FrameCommand{\hspace{\leftmargin}\CustomFBox{}{}\z@\z@\z@\z@}%
+  \MakeFramed {\advance\hsize-\width \FrameRestore}%
+  }{\endMakeFramed}
+% source code environment
+
+% paste source code at specified lines
+\newcommand{\sourcecode}[2][show]{\par{%
+	% style setting
+	\footnotesize
+	\isreport@style@family
+	% If #1 has 'show' flag, show file name on the top of source code.
+	\isreport@iffind{show}{#1}{%
+		\vspace{\topsep}%
+		\settowidth{\isreport@filenamewidth}{\isreport@verb\isreport@filename}%
+		\addtolength{\isreport@filenamewidth}{4ex}%
+		\noindent
+		\hskip -1.0\leftskip
+		\CustomFBox{}{}\FrameRule\z@\FrameRule\FrameRule{%
+			\isreport@tab{2ex}%
+			\isreport@verb\isreport@filename%
+			\rule[-0.3em]{0pt}{1em}%
+			\isreport@tab{2ex}%
+		}%
+		%\vspace{-\topsep}%
+		%\vspace{-\parsep}%
+		%\vspace{-\fboxsep}%
+		\vspace{-0.9em}%
+	}%
+	\isreport@iffind{sad}{#1}{%
+		\begin{isreport@noframed}{\noindent
+			\isreport@sourcecode@launchar@first{#1}#2,\isreport@end,%
+		}\end{isreport@noframed}%
+	\else
+		\begin{isreport@oframed}{\noindent
+			\isreport@sourcecode@launchar@first{#1}#2,\isreport@end,%
+		}\end{isreport@oframed}%
+	}%
+}}
+\def\isreport@sourcecode@launchar@first#1#2-#3,#4,{%
+	\ifx #4\isreport@end\relax
+		\isreport@sourcecode[#2-#3]{#1, first, last}%
+	\else
+		\isreport@sourcecode[#2-#3]{#1, first}%
+		\edef\isreport@sourcecode@x{%
+			\noexpand\isreport@sourcecode@launchar{#1}#4,%
+		}%
+		\expandafter\isreport@sourcecode@x
+	\fi
+}
+\def\isreport@sourcecode@launchar#1#2-#3,#4,{%
+	\def\isreport@shortening{\hfill( --- 中略 --- )\hfill\hfill\hfill}%
+	\\%\isreport@sourcecode@line{:}{ :\\}%
+	\isreport@sourcecode@line{:}{ :\vbox{\isreport@shortening}\\}%
+	%\isreport@sourcecode@line{:}{ :\\}%
+	\ifx #4\isreport@end\relax
+		\isreport@sourcecode[#2-#3]{#1, last}%
+	\else
+		\isreport@sourcecode[#2-#3]{#1}%
+		\edef\isreport@sourcecode@x{%
+			\noexpand\isreport@sourcecode@launchar{#1}#4,%
+		}%
+		\expandafter\isreport@sourcecode@x
+	\fi
+}
+
+\def\isreport@sourcecode@line#1#2{%
+	\hskip -1.0\isreport@totalleftmargin
+	\hskip -1em%
+	%\hskip -1.0\isreport@linenumberlength
+	\isreport@pad{#1}%
+	#1%
+	\isreport@tab{0.5ex}%
+	\isreport@tab{2ex}%
+	#2%
+}
+
+\def\isreport@sourcecode[#1-#2]#3{%
+	% bind file
+	\def\isreport@style@firstline{#1}%
+	\def\isreport@style@lastline{#2}%
+	\ifx\empty\isreport@style@firstline%
+		\def\isreport@style@firstline{1}%
+	\fi
+	\ifx\empty\isreport@style@lastline%
+		\def\isreport@style@lastline{99999999}%
+	\fi
+	\expandafter\ifx\csname isreport@file@\isreport@filename\endcsname \relax
+	\else
+		%\isreport@changecatcode
+		% get max linenumber
+		\setcounter{isreport@maxlinenumber}{\csname isreport@file@\isreport@filename\endcsname}%
+		% style setting
+		\setlength{\isreport@tablength}{\isreport@style@tablength}%
+		\setlength{\isreport@linenumberlength}{\isreport@style@linenumberlength}%
+		%\setlength{\isreport@contentlength}{\hsize}%
+		%\addtolength{\isreport@contentlength}{-\isreport@linenumberlength}%
+		%\addtolength{\isreport@contentlength}{-10ex}%
+		%
+		\setcounter{isreport@firstline}{\isreport@style@firstline}%
+		\setcounter{isreport@lastline}{\isreport@style@lastline}%
+		%\setlength{\isreport@hsize}{\hsize}%
+		%\addtolength{\isreport@hsize}{-2.0\leftskip}%
+		\setcounter{isreport@linenumber}{\value{isreport@firstline}}%
+		\isreport@iffind{nonumber}{#3}{%
+			\def\isreport@map@linenumber{}%
+		\else
+			\def\isreport@map@linenumber{\the\value{isreport@linenumber}}%
+		}%
+		\loop
+		\ifnum \value{isreport@linenumber}<\value{isreport@maxlinenumber}%
+			\ifnum \value{isreport@lastline}<\value{isreport@linenumber}%
+			\else
+				\ifnum \value{isreport@firstline}<\value{isreport@linenumber}%
+					\\
+				\fi
+				\isreport@sourcecode@line{\isreport@map@linenumber}{%
+					\edef\isreport@x{\csname isreport@file@\isreport@filename @\the\value{isreport@linenumber}\endcsname}%
+					\isreport@replacespaces\isreport@x
+				}%
+			\fi
+			\addtocounter{isreport@linenumber}{1}%
+		\repeat
+		%\isreport@restorecatcode
+	\fi
+}
