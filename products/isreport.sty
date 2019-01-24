@@ -6,7 +6,7 @@
 % You can use it but it's at your own risk.
 % 
 
-\ProvidesPackage{isreport}[2018/05/21 v0.9]
+\ProvidesPackage{isreport}[2019/01/24 v0.99]
 
 \RequirePackage{framed}
 %\RequirePackage{ifthen}
@@ -37,7 +37,9 @@
 }
 
 % delete first and last space
-\def\isreport@shrinkspace#1\isreport@end{\isreport@shrinkspace@first#1\isreport@end}
+\def\isreport@shrinkspace#1\isreport@end{%
+	\isreport@shrinkspace@first#1\isreport@end
+}
 \def\isreport@shrinkspace@first#1#2{%
 	\ifcat#1 %
 		\expandafter\isreport@shrinkspace@first
@@ -68,13 +70,34 @@
 \newif\ifisreport@iffind@result
 % iffind inner function
 \def\isreport@iffind@if#1,{%
-	\edef\isreport@strII{\isreport@shrinkspace#1\isreport@end}%
-	\ifx\isreport@strI\isreport@strII
-		\isreport@iffind@resulttrue
-	\fi
-	\ifx\empty\isreport@strII
-	\else
+	\ifx#1 \empty%
 		\expandafter\isreport@iffind@if
+	\else
+		\ifx\empty#1\relax
+		\else
+			\ifx\empty#1\empty
+				\expandafter\expandafter
+				\expandafter\expandafter
+				\expandafter\expandafter
+				\expandafter\isreport@iffind@if
+			\else
+				\edef\isreport@strII{\isreport@shrinkspace#1\isreport@end}%
+				\ifx\isreport@strI\isreport@strII
+					\isreport@iffind@resulttrue
+				\fi
+				\ifx\empty\isreport@strII
+				\else
+					\expandafter\expandafter
+					\expandafter\expandafter
+					\expandafter\expandafter
+					\expandafter\expandafter
+					\expandafter\expandafter
+					\expandafter\expandafter
+					\expandafter\expandafter
+					\expandafter\isreport@iffind@if
+				\fi
+			\fi
+		\fi
 	\fi
 }
 % find string from string list (abc, def, ...)

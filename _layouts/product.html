@@ -13,6 +13,15 @@
 		<h1 class="display-5">{{ page.title }}</h1>
 		<p class="lead">{{ page.description }}</p>
 		<a class="btn btn-primary" href="{{ page.download | relative_url }}" role="button" download>Download</a>
+		<span class="text-muted ml-4">
+			Last update: 
+			{% if page.update[0] -%}
+				{%- assign sorted_update = page.update | sort | reverse -%}
+				{{- sorted_update[0] | date:"%Y/%m/%d" -}}
+			{%- else -%}
+				{{- page.date | date:"%Y/%m/%d" -}}
+			{%- endif -%}
+		</span>
 	</div>
 	<main class="container">
 		{{ content }}
